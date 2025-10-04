@@ -1,36 +1,39 @@
 # Pong Game
 
-This is a simple Pong game implemented in Python.
+This is a simple Pong game implemented in Python using the Pygame library.
+
+## Description
+
+This is a classic Pong game where a player controls a paddle on the left side of the screen to compete against an AI-controlled paddle on the right side. The objective is to score points by getting the ball past the opponent's paddle.
 
 ## Features
 
-- Two-player mode
-- Basic collision detection
-- Configurable game settings
+- Single-player mode against a simple AI.
+- Basic ball and paddle physics.
+- Score tracking.
 
 ## Requirements
 
 - Python 3.x
+- Pygame
 
 ## How to Run
 
-1. Ensure you have Python installed.
-2. Run the game using the command:
-   ```sh
-   python pong_game.py
-   ```
+1.  Ensure you have Python 3 installed on your system.
+2.  Install the required `pygame` library:
+    ```sh
+    pip install pygame
+    ```
+3.  Run the game using the command:
+    ```sh
+    python pong_game.py
+    ```
 
-## Configuration
+## How to Play
 
-The game settings can be adjusted in the `config.json` file.
-
-## Assets
-
-The game uses the following assets:
-- `paddle.png`
-- `ball.png`
-
-Please ensure these assets are in the same directory as the game script.
+- Use the **W** key to move your paddle up.
+- Use the **S** key to move your paddle down.
+- The first player to miss the ball concedes a point to the opponent.
 
 ## Contributing
 
