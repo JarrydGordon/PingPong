@@ -1,69 +1,44 @@
 import pygame
 import random
+import json
 
 # Initialize Pygame
 pygame.init()
-
-# Constants
-WIDTH, HEIGHT = 800, 600
-BALL_RADIUS = 20
-PADDLE_WIDTH = 10
-PADDLE_HEIGHT = 100
-FPS = 60
 
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
 class Ball:
-    """A class to represent the ball in the Pong game."""
-    def __init__(self):
-        """
-        Initializes the Ball object.
+    def __init__(self, x, y, radius, speed):
+        self.x = x
+        self.y = y
+        self.vx = random.choice([-speed, speed])
+        self.vy = random.choice([-speed, speed])
+        self.radius = radius
+        self.speed = speed
 
-        The ball is initialized at the center of the screen with a random velocity.
-        """
-        self.x = WIDTH / 2
-        self.y = HEIGHT / 2
-        self.vx = random.choice([-5, 5])
-        self.vy = random.choice([-5, 5])
-        self.radius = BALL_RADIUS
-
-    def move(self):
-        """
-        Moves the ball according to its velocity.
-
-        It also handles bouncing off the top and bottom walls.
-        """
+    def move(self, height):
         self.x += self.vx
         self.y += self.vy
 
         # Bounce off top and bottom
-        if self.y < self.radius or self.y > HEIGHT - self.radius:
+        if self.y < self.radius or self.y > height - self.radius:
             self.vy *= -1
 
-    def reset(self):
-        """Resets the ball to the center of the screen with a new random velocity."""
-        self.x = WIDTH / 2
-        self.y = HEIGHT / 2
-        self.vx = random.choice([-5, 5])
-        self.vy = random.choice([-5, 5])
-
-class Paddle:
-    """A class to represent a paddle in the Pong game."""
-    def __init__(self, x, y):
-        """
-        Initializes the Paddle object.
-
-        Args:
-            x (int): The initial x-coordinate of the paddle.
-            y (int): The initial y-coordinate of the paddle.
-        """
+    def reset(self, x, y):
         self.x = x
         self.y = y
-        self.width = PADDLE_WIDTH
-        self.height = PADDLE_HEIGHT
-        self.speed = 5
+        self.vx = random.choice([-self.speed, self.speed])
+        self.vy = random.choice([-self.speed, self.speed])
+
+class Paddle:
+    def __init__(self, x, y, width, height, speed):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.speed = speed
 
     def move_up(self):
         """Moves the paddle up, ensuring it doesn't go off-screen."""
@@ -71,48 +46,54 @@ class Paddle:
         if self.y < 0:
             self.y = 0
 
-    def move_down(self):
-        """Moves the paddle down, ensuring it doesn't go off-screen."""
+    def move_down(self, height):
         self.y += self.speed
-        if self.y > HEIGHT - self.height:
-            self.y = HEIGHT - self.height
+        if self.y > height - self.height:
+            self.y = height - self.height
 
-def draw_text(text, size, x, y):
-    """
-    Draws text on the screen.
-
-    Args:
-        text (str): The text to be displayed.
-        size (int): The font size.
-        x (int): The x-coordinate of the text.
-        y (int): The y-coordinate of the text.
-    """
+def draw_text(screen, text, size, x, y):
     font = pygame.font.Font(None, size)
     img = font.render(text, True, WHITE)
     screen.blit(img, (x, y))
 
-def main():
-    """
-    The main function to run the Pong game.
+def init_game(config):
+    WIDTH, HEIGHT = config['window_width'], config['window_height']
+    BALL_RADIUS = config['ball_size']
+    PADDLE_WIDTH = config['paddle_width']
+    PADDLE_HEIGHT = config['paddle_height']
+    BALL_SPEED = config['ball_speed']
+    PADDLE_SPEED = config['paddle_speed']
 
-    This function initializes the game window, objects, and runs the main game loop.
-    It handles user input, updates game state, and renders the game on the screen.
-    """
-    # Create game objects
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Pong with AI")
     clock = pygame.time.Clock()
 
-    ball = Ball()
-    player_paddle = Paddle(0, HEIGHT / 2 - PADDLE_HEIGHT / 2)
-    ai_paddle = Paddle(WIDTH - PADDLE_WIDTH, HEIGHT / 2 - PADDLE_HEIGHT / 2)
+    ball = Ball(WIDTH / 2, HEIGHT / 2, BALL_RADIUS, BALL_SPEED)
+    player_paddle = Paddle(0, HEIGHT / 2 - PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED)
+    ai_paddle = Paddle(WIDTH - PADDLE_WIDTH, HEIGHT / 2 - PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED)
 
+    game_config = {
+        'width': WIDTH,
+        'height': HEIGHT,
+        'ball_radius': BALL_RADIUS,
+        'paddle_width': PADDLE_WIDTH,
+        'fps': 60
+    }
+
+    return ball, player_paddle, ai_paddle, screen, clock, game_config
+
+def game_loop(ball, player_paddle, ai_paddle, screen, clock, game_config):
     player_score = 0
     ai_score = 0
 
+    WIDTH = game_config['width']
+    HEIGHT = game_config['height']
+    BALL_RADIUS = game_config['ball_radius']
+    PADDLE_WIDTH = game_config['paddle_width']
+    FPS = game_config['fps']
+
     running = True
     while running:
-        # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -121,25 +102,22 @@ def main():
         if keys[pygame.K_w]:
             player_paddle.move_up()
         if keys[pygame.K_s]:
-            player_paddle.move_down()
+            player_paddle.move_down(HEIGHT)
 
-        # AI paddle movement
         if ai_paddle.y + ai_paddle.height / 2 < ball.y:
-            ai_paddle.move_down()
+            ai_paddle.move_down(HEIGHT)
         elif ai_paddle.y + ai_paddle.height / 2 > ball.y:
             ai_paddle.move_up()
 
-        # Ball movement
-        ball.move()
+        ball.move(HEIGHT)
 
-        # Ball collision with paddles
         if (ball.x <= PADDLE_WIDTH and
             ball.y >= player_paddle.y and
             ball.y <= player_paddle.y + player_paddle.height):
             ball.vx *= -1
         elif ball.x <= PADDLE_WIDTH:
             ai_score += 1
-            ball.reset()
+            ball.reset(WIDTH / 2, HEIGHT / 2)
 
         if (ball.x >= WIDTH - PADDLE_WIDTH - BALL_RADIUS and
             ball.y >= ai_paddle.y and
@@ -147,20 +125,26 @@ def main():
             ball.vx *= -1
         elif ball.x >= WIDTH - PADDLE_WIDTH - BALL_RADIUS:
             player_score += 1
-            ball.reset()
+            ball.reset(WIDTH / 2, HEIGHT / 2)
 
-        # Draw everything
         screen.fill(BLACK)
-        pygame.draw.rect(screen, WHITE, (ball.x - BALL_RADIUS, ball.y - BALL_RADIUS, BALL_RADIUS * 2, BALL_RADIUS * 2))
+        pygame.draw.rect(screen, WHITE, (ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2))
         pygame.draw.rect(screen, WHITE, (player_paddle.x, player_paddle.y, player_paddle.width, player_paddle.height))
         pygame.draw.rect(screen, WHITE, (ai_paddle.x, ai_paddle.y, ai_paddle.width, ai_paddle.height))
         pygame.draw.line(screen, WHITE, (WIDTH / 2, 0), (WIDTH / 2, HEIGHT), 1)
 
-        draw_text(str(player_score), 64, WIDTH / 4, 20)
-        draw_text(str(ai_score), 64, WIDTH * 3 / 4, 20)
+        draw_text(screen, str(player_score), 64, WIDTH / 4, 20)
+        draw_text(screen, str(ai_score), 64, WIDTH * 3 / 4, 20)
 
         pygame.display.flip()
         clock.tick(FPS)
+
+def main():
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+
+    ball, player_paddle, ai_paddle, screen, clock, game_config = init_game(config)
+    game_loop(ball, player_paddle, ai_paddle, screen, clock, game_config)
 
     pygame.quit()
 
