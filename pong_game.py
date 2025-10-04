@@ -41,6 +41,7 @@ class Paddle:
         self.speed = speed
 
     def move_up(self):
+        """Moves the paddle up, ensuring it doesn't go off-screen."""
         self.y -= self.speed
         if self.y < 0:
             self.y = 0
