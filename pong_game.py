@@ -92,8 +92,8 @@ def handle_collisions(ball, player_paddle, ai_paddle, game_config):
 
     # Player paddle collision
     if (ball.x - ball.radius <= PADDLE_WIDTH and
-        ball.y >= player_paddle.y and
-        ball.y <= player_paddle.y + player_paddle.height):
+        ball.y + ball.radius >= player_paddle.y and
+        ball.y - ball.radius <= player_paddle.y + player_paddle.height):
         ball.vx *= -1
     # AI scores if ball goes past player
     elif ball.x + ball.radius < 0:
@@ -102,8 +102,8 @@ def handle_collisions(ball, player_paddle, ai_paddle, game_config):
 
     # AI paddle collision
     if (ball.x + ball.radius >= WIDTH - PADDLE_WIDTH and
-        ball.y >= ai_paddle.y and
-        ball.y <= ai_paddle.y + ai_paddle.height):
+        ball.y + ball.radius >= ai_paddle.y and
+        ball.y - ball.radius <= ai_paddle.y + ai_paddle.height):
         ball.vx *= -1
     # Player scores if ball goes past AI
     elif ball.x - ball.radius > WIDTH:
