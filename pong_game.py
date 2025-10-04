@@ -82,14 +82,42 @@ def init_game(config):
 
     return ball, player_paddle, ai_paddle, screen, clock, game_config
 
+def handle_collisions(ball, player_paddle, ai_paddle, game_config):
+    WIDTH = game_config['width']
+    HEIGHT = game_config['height']
+    BALL_RADIUS = game_config['ball_radius']
+    PADDLE_WIDTH = game_config['paddle_width']
+    player_score_change = 0
+    ai_score_change = 0
+
+    # Player paddle collision
+    if (ball.x - ball.radius <= PADDLE_WIDTH and
+        ball.y >= player_paddle.y and
+        ball.y <= player_paddle.y + player_paddle.height):
+        ball.vx *= -1
+    # AI scores if ball goes past player
+    elif ball.x + ball.radius < 0:
+        ai_score_change = 1
+        ball.reset(WIDTH / 2, HEIGHT / 2)
+
+    # AI paddle collision
+    if (ball.x + ball.radius >= WIDTH - PADDLE_WIDTH and
+        ball.y >= ai_paddle.y and
+        ball.y <= ai_paddle.y + ai_paddle.height):
+        ball.vx *= -1
+    # Player scores if ball goes past AI
+    elif ball.x - ball.radius > WIDTH:
+        player_score_change = 1
+        ball.reset(WIDTH / 2, HEIGHT / 2)
+
+    return player_score_change, ai_score_change
+
 def game_loop(ball, player_paddle, ai_paddle, screen, clock, game_config):
     player_score = 0
     ai_score = 0
 
     WIDTH = game_config['width']
     HEIGHT = game_config['height']
-    BALL_RADIUS = game_config['ball_radius']
-    PADDLE_WIDTH = game_config['paddle_width']
     FPS = game_config['fps']
 
     running = True
@@ -111,21 +139,9 @@ def game_loop(ball, player_paddle, ai_paddle, screen, clock, game_config):
 
         ball.move(HEIGHT)
 
-        if (ball.x <= PADDLE_WIDTH and
-            ball.y >= player_paddle.y and
-            ball.y <= player_paddle.y + player_paddle.height):
-            ball.vx *= -1
-        elif ball.x <= PADDLE_WIDTH:
-            ai_score += 1
-            ball.reset(WIDTH / 2, HEIGHT / 2)
-
-        if (ball.x >= WIDTH - PADDLE_WIDTH - BALL_RADIUS and
-            ball.y >= ai_paddle.y and
-            ball.y <= ai_paddle.y + ai_paddle.height):
-            ball.vx *= -1
-        elif ball.x >= WIDTH - PADDLE_WIDTH - BALL_RADIUS:
-            player_score += 1
-            ball.reset(WIDTH / 2, HEIGHT / 2)
+        player_score_change, ai_score_change = handle_collisions(ball, player_paddle, ai_paddle, game_config)
+        player_score += player_score_change
+        ai_score += ai_score_change
 
         screen.fill(BLACK)
         pygame.draw.rect(screen, WHITE, (ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2))
